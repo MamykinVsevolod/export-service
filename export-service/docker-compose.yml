@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  # Backend FastAPI
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: export_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=export_user
+      - DB_PASSWORD=export_password
+      - DB_NAME=export_db
+    depends_on:
+      - postgres
+    volumes:
+      - ./backend:/app
+    networks:
+      - export-network
+    restart: unless-stopped
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16
+    container_name: export_postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=export_user
+      - POSTGRES_PASSWORD=export_password
+      - POSTGRES_DB=export_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - export-network
+    restart: unless-stopped
+
+  # Frontend (простой nginx для статики)
+  frontend:
+    image: nginx:alpine
+    container_name: export_frontend
+    ports:
+      - "3000:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html
+      - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - backend
+    networks:
+      - export-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  export-network:
+    driver: bridge

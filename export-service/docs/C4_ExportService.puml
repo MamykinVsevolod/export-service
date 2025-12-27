@@ -1,0 +1,138 @@
+@startuml C4_ExportService
+
+title Code Diagram (C4) - ExportService Classes
+
+package "app" {
+    
+    class FastAPIApp {
+        +app: FastAPI
+        +title: str
+        +version: str
+        --
+        +include_router()
+        +add_middleware()
+    }
+    
+    package "api" {
+        class APIRouter {
+            +prefix: str
+            --
+            +health_check()
+            +get_sessions()
+            +get_session_with_data(session_id: int)
+            +export_data(export_request: ExportRequest)
+            +get_export_history()
+        }
+    }
+    
+    package "services" {
+        class ExportService {
+            -db: Session
+            --
+            +export_to_csv(session_id: int): BytesIO
+            +export_to_json(session_id: int): BytesIO
+            +export_to_excel(session_id: int): BytesIO
+            -_get_data_for_export(session_id: int): List[Dict]
+            -_save_export_history(...)
+        }
+    }
+    
+    package "models" {
+        class ParsingSession <<Entity>> {
+            +id: int
+            +session_name: str
+            +status: str
+            +created_at: datetime
+            +completed_at: datetime
+            +total_items: int
+        }
+        
+        class ParsedData <<Entity>> {
+            +id: int
+            +session_id: int
+            +product_name: str
+            +price: Decimal
+            +old_price: Decimal
+            +currency: str
+            +description: str
+            +category: str
+            +in_stock: bool
+            +url: str
+            +image_url: str
+            +brand: str
+            +created_at: datetime
+        }
+        
+        class ExportHistory <<Entity>> {
+            +id: int
+            +session_id: int
+            +export_format: str
+            +file_name: str
+            +file_size: int
+            +records_count: int
+            +created_at: datetime
+        }
+    }
+    
+    package "schemas" {
+        class ExportRequest <<DTO>> {
+            +session_id: int
+            +format: str
+        }
+        
+        class ParsingSessionResponse <<DTO>> {
+            +id: int
+            +session_name: str
+            +status: str
+            +total_items: int
+            +created_at: datetime
+        }
+        
+        class ExportHistoryResponse <<DTO>> {
+            +id: int
+            +session_id: int
+            +export_format: str
+            +file_name: str
+            +records_count: int
+            +created_at: datetime
+        }
+    }
+    
+    package "database" {
+        class DatabaseConnection {
+            +engine: Engine
+            +SessionLocal: sessionmaker
+            --
+            +get_db(): Generator
+        }
+    }
+    
+    package "core" {
+        class Settings {
+            +APP_NAME: str
+            +APP_VERSION: str
+            +DATABASE_URL: str
+            +HOST: str
+            +PORT: int
+            +DEBUG: bool
+        }
+    }
+}
+
+' Relationships
+FastAPIApp --> APIRouter : uses
+APIRouter --> ExportService : calls
+APIRouter ..> ExportRequest : validates
+APIRouter ..> ParsingSessionResponse : returns
+
+ExportService --> DatabaseConnection : uses
+ExportService --> ParsingSession : queries
+ExportService --> ParsedData : reads
+ExportService --> ExportHistory : creates
+
+ParsingSession "1" -- "0..*" ParsedData
+ParsingSession "1" -- "0..*" ExportHistory
+
+DatabaseConnection --> Settings : configured by
+
+@enduml

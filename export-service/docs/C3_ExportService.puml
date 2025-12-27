@@ -1,0 +1,68 @@
+@startuml C3_ExportService
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Component Diagram (C3) - ExportService
+
+Person(user, "Пользователь", "Аналитик/Менеджер")
+System_Ext(browser, "Web Browser", "Chrome/Firefox/Safari")
+
+Container_Boundary(export_service, "ExportService") {
+    
+    Container_Boundary(frontend, "Frontend Container (Nginx)") {
+        Component(static_files, "Static Files", "HTML/CSS/JS", "Веб-интерфейс для выбора сессий и экспорта")
+        Component(nginx_proxy, "Nginx Proxy", "Reverse Proxy", "Проксирование запросов к API")
+    }
+    
+    Container_Boundary(backend, "Backend Container (FastAPI)") {
+        Component(api_router, "API Router", "FastAPI Router", "Маршрутизация HTTP запросов")
+        Component(cors_middleware, "CORS Middleware", "Middleware", "Обработка CORS для фронтенда")
+        
+        ComponentQueue(health_endpoint, "Health Endpoint", "GET /health", "Проверка работоспособности")
+        ComponentQueue(sessions_endpoint, "Sessions Endpoints", "GET /sessions", "Получение списка сессий")
+        ComponentQueue(export_endpoint, "Export Endpoint", "POST /export", "Экспорт данных в файл")
+        ComponentQueue(history_endpoint, "History Endpoints", "GET /export/history", "История экспортов")
+        
+        Component(export_service_comp, "ExportService", "Python Class", "Бизнес-логика экспорта")
+        Component(csv_exporter, "CSV Exporter", "Pandas", "Экспорт в CSV формат")
+        Component(json_exporter, "JSON Exporter", "JSON", "Экспорт в JSON формат")
+        Component(excel_exporter, "Excel Exporter", "Pandas + XlsxWriter", "Экспорт в Excel с автоподбором колонок")
+        
+        Component(schemas, "Pydantic Schemas", "Data Validation", "Валидация запросов/ответов")
+        Component(models, "SQLAlchemy Models", "ORM Models", "Модели БД: Session, ParsedData, ExportHistory")
+        Component(db_connection, "Database Connection", "SQLAlchemy Engine", "Пул соединений с PostgreSQL")
+    }
+    
+    ContainerDb(postgres, "PostgreSQL", "Database", "Хранение сессий, данных парсинга и истории экспортов")
+}
+
+Rel(user, browser, "Использует")
+Rel(browser, static_files, "Загружает UI", "HTTP")
+Rel(browser, nginx_proxy, "API запросы", "HTTP/JSON")
+
+Rel(nginx_proxy, api_router, "Проксирует", "HTTP")
+Rel(api_router, cors_middleware, "Обрабатывает через")
+
+Rel(cors_middleware, health_endpoint, "Маршрутизирует")
+Rel(cors_middleware, sessions_endpoint, "Маршрутизирует")
+Rel(cors_middleware, export_endpoint, "Маршрутизирует")
+Rel(cors_middleware, history_endpoint, "Маршрутизирует")
+
+Rel(sessions_endpoint, schemas, "Валидирует через")
+Rel(export_endpoint, schemas, "Валидирует через")
+
+Rel(sessions_endpoint, models, "Читает данные")
+Rel(export_endpoint, export_service_comp, "Вызывает")
+Rel(history_endpoint, models, "Читает историю")
+
+Rel(export_service_comp, csv_exporter, "Использует для CSV")
+Rel(export_service_comp, json_exporter, "Использует для JSON")
+Rel(export_service_comp, excel_exporter, "Использует для Excel")
+
+Rel(export_service_comp, models, "Читает/записывает")
+Rel(models, db_connection, "Использует")
+Rel(db_connection, postgres, "SQL запросы", "TCP/5432")
+
+SHOW_LEGEND()
+@enduml

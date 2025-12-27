@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExportService - Экспорт данных парсинга</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-nav">
+                <button class="btn-back-icon" onclick="window.location.href='#'">←</button>
+                <span class="nav-text">Создать задачу</span>
+            </div>
+            <h1>Экспорт результатов</h1>
+        </header>
+
+        <main>
+            <!-- Секция выбора сессии -->
+            <section class="card">
+                <h2>📋 Доступные парсинг-сессии</h2>
+                <div id="sessions-list" class="sessions-list">
+                    <p class="loading">Загрузка сессий...</p>
+                </div>
+            </section>
+
+            <!-- Секция экспорта -->
+            <section class="card">
+                <h2>📥 Экспорт данных</h2>
+                <div class="export-form">
+                    <div class="form-group">
+                        <label for="session-select">Выберите сессию:</label>
+                        <select id="session-select" class="form-control">
+                            <option value="">-- Выберите сессию --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="format-select">Формат экспорта:</label>
+                        <select id="format-select" class="form-control">
+                            <option value="csv">CSV (таблица)</option>
+                            <option value="json">JSON (данные)</option>
+                            <option value="excel">Excel (таблица)</option>
+                        </select>
+                    </div>
+
+                    <button id="export-btn" class="btn btn-primary">
+                        Экспортировать данные
+                    </button>
+
+                    <div id="export-status" class="status-message"></div>
+                </div>
+            </section>
+
+            <!-- Секция предпросмотра данных -->
+            <section class="card">
+                <h2>👁️ Предпросмотр данных</h2>
+                <div id="data-preview" class="data-preview">
+                    <p class="info-text">Выберите сессию для просмотра данных</p>
+                </div>
+            </section>
+
+            <!-- Секция истории экспортов -->
+            <section class="card">
+                <h2>📊 История экспортов</h2>
+                <div id="export-history" class="export-history">
+                    <p class="loading">Загрузка истории...</p>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>ExportService v1.0.0 | Разработано для проекта Parser</p>
+            <p><a href="http://localhost:8000/docs" target="_blank">API Документация</a></p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
